@@ -43,6 +43,11 @@ Serialeasy utilizes a custom data attribute added to each form field with a desc
 </script>
 ```
 
+## Documentation
+
+Details will follow soon.
+
+
 ## License
 
 Serialeasy is licensed under the [MIT license](https://raw.github.com/joshfire/jsonform/master/LICENSE).
