@@ -1,0 +1,540 @@
+
+<!doctype html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+
+	<title>Overseer Settings Page</title>
+	<meta name="description" content="Overseer Settings Page">
+	<meta name="author" content="Daniel Ivanov">
+
+	<!--<link rel="stylesheet" href="css/styles.css?v=1.0">-->
+
+	<style>
+		* { box-sizing: border-box; }
+		html, body { margin: 0; padding: 0; position: relative; width: 100%; height: 100%; }
+		body { background-color: #e6e6e6; color: #999; font-family: sans-serif; }
+		.wrapper { position: relative; margin: 0 auto; padding: 10px; width: 100%; max-width: 800px; min-height: 100%; }
+		.top-border { border-top: 1px solid #aaa; }
+		.info-icon { font-weight: bold; cursor: pointer; color: #01a579; font-size: 16px; }
+		
+		a[type="button"] { color: #0ae10a; cursor: pointer; }
+		a[type="button"]:hover { color: #0aba0a; }
+		
+		main { position: relative; background-color: white; color: #444; min-width: 570px; padding-bottom: 100px; }
+			main .editor {}
+				main .header { position: -webkit-sticky; position: sticky; top: -1px; z-index: 100; background: white; display: grid; grid-template-columns: 350px auto; padding: 20px; border-bottom: 1px solid #aaa; }
+				main .header h2 { margin: 0; align-self: center; }
+				main .header .settings_ui { text-align: right; align-self: center; -webkit-user-select: none; user-select: none;}
+					main .header .settings_ui a { display: inline-block; cursor: pointer; background-color: #0ae10a; color: white; padding: 8px; border-radius: 5px; }
+					main .header .settings_ui a:hover { background-color: #0aba0a; }
+				main section { position: relative; padding: 20px; }
+					main section:not(:last-child):after { content: ''; position: absolute; bottom: 0; left: 20px; width: calc(100% - 40px); height: 1px; background-color: #ccc; }
+					main section div.textinput { position: relative; }
+						main section div.textinput input { padding: 10px 5px 5px; width: 50%; min-width: 350px; border: none; border-bottom: 1px solid #e04141; outline: none; font-size: 18px; }
+						main section div.textinput label { position: absolute; left: 60px; bottom: 5px; color: rgba(224,65,65,0.7); transition: all 0.2s linear; }
+						main section div.textinput input:focus, main section div.textinput input:not([value=""]):not(:focus) { border-color:#0ae10a; }
+						main section div.textinput input:focus ~ label, main section div.textinput input:not([value=""]):not(:focus) ~ label { bottom: -20px; font-size:14px; color:#0ae10a; }
+						
+				main section[name=performance] div.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); grid-gap: 5px; }
+				
+				main section[name=sections] div.checks { padding-left: 50px; }
+				
+				main section[name=meta] div.textinput, .special { margin: 15px 0 45px 0; }
+				main section[name=meta] div.textinput:last-child, special:last-child { margin: 15px 0 20px 0; }
+				main section[name=meta] div.textinput label, div.textinput.special label { left: 5px; }
+				
+				main .editor textarea { tab-size: 1; width: 80%; min-width: 320px; min-height: 100px; border: none; outline: none; border-left: 1px solid rgba(224,65,65,0.7); border-bottom: 1px solid rgba(224,65,65,0.7); }
+				main section textarea:focus, main section textarea:not([value=""]):not(:focus) { border-color:#0ae10a; }
+				
+				main .textbox { line-height: 1.6; margin-bottom: 15px;}
+				
+				main .toolbar { text-align: right; font-size: 14px; }
+				main .toolbar a { color: #0ae10a; cursor: pointer; }
+				main .toolbar a:hover { color: #0aba0a; }
+
+				.show-when-checked { position: relative; height: 0; overflow: hidden;        max-height: 0; margin: 0; opacity: 0; visibility: hidden; transition: max-height 0.2s linear 0.2s, margin 0.2s linear 0.2s, opacity 0.2s linear; }
+				input.shows-next:checked ~ .show-when-checked { height: auto; overflow: initial;           padding-left: 55px; max-height: 5000px; margin: 10px 0 25px; opacity: 1; visibility: visible; transition: max-height 0.2s linear, margin 0.2s linear, opacity 0.2s linear 0.2s; }
+				
+				section[name=sections] > .show-when-checked > div.textinput { margin: 15px 0 45px 0; }
+				section[name=sections] > .show-when-checked > div.textinput label { left: 5px; }
+				
+				/* toggles */
+				.switch { position: relative; display: inline-block; font-size: 18px; margin: 15px 0 15px 55px; }
+				main input[type="checkbox"] {display:none; vertical-align: bottom; }
+				input:checked + .switch .knob {background-color: #0ae10a; }
+				input:checked + .switch .knob:before { transform: translateX( calc(40px - (25px*0.99)) ); box-shadow: -5px 0px 25px 0px #434343; }
+				.switch .knob { display: inline-block; width: 40px; height: 25px; background-color: rgba(224,65,65,0.8); border-radius: 40px; vertical-align: bottom; transition: background-color 0.2s linear; position: absolute; left: -50px; top: -5px;}
+				.switch .knob:before { position:absolute; background-color: white; content:""; left: calc(25px*0.10); top: calc(25px*0.10); width: calc(25px*0.80); height: calc(25px*0.80); border-radius: 50%; transform: translateX(0px); transition: transform 0.2s linear;}
+				
+				#output { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; padding: 50px 25px; background-color: rgba(68, 68, 68, 0.5); color: #f2f2f2; }
+				#output .results { white-space: pre; }
+				#output a { display: inline-block; position: absolute; top: 30px; right: 60px; font-size: 30px; }
+	</style>
+</head>
+
+<body>
+	<div class='wrapper'>
+		<main>
+			<div class='container create-new'>
+				<div class='editor'>
+					<div class='header'>
+						<h2>Settings</h2>
+						<div class='settings_ui'>
+							<a type='button' data-action='save_editor_json'>Save</a>
+						</div>
+					</div>
+					<div class='content'>
+						<section name='meta'>
+							<h3>Meta Information</h3>	
+							<div class='textinput'>
+								<input type="text" id='meta-hostname' data-structure='meta{}-hostname' onkeyup="this.setAttribute('value', this.value);" value='' />
+								<label for='meta-hostname'>Enter hostname: </label>
+								<span class='info-icon' title='Hostname of the site you are creating settings for (no protocol or ports, main url only).&#013;E.g. www.example.com '>&#9432;</span>
+							</div>
+							
+							<div class='textinput'>
+								<input type="text" id='meta-UFN' data-structure='meta{}-UFN' onkeyup="this.setAttribute('value', this.value);" value='' />
+								<label for='meta-UFN'>Enter alias: </label>
+								<span class='info-icon' title='A User-friendly name for more casual identification.&#013;E.g. Example '>&#9432;</span>
+							</div>
+						</section>
+						
+						<section name='links'>
+							<h3>Dead Links</h3>							
+							<input type="checkbox" id='checkLinks' data-structure='checkLinks' class='shows-next' />
+							<label class="switch" for='checkLinks'> 
+								<span class="knob"></span> Check page for dead links
+							</label>
+							
+							<div class='show-when-checked textinput'>
+								<input type="text" id='checkLinks-id' data-structure='checkLinks{}-id' onkeyup="this.setAttribute('value', this.value);" value='' />
+								<label for='checkLinks-id'>[Optional] Check only specific area: </label>
+								<span class='info-icon' title='Enter CSS selector type of a unique section. If entered, only links links in this section of the page will be verified. '>&#9432;</span>
+							</div>
+						</section>
+						
+						<section name='performance'>
+							<h3>Performance Measurements</h3>							
+							<input type="checkbox" id='checkPerformance' data-structure='performance' class='shows-next' />
+							<label class="switch" for='checkPerformance'> 
+								<span class="knob"></span> Score page performance
+							</label>
+							
+							<div class='show-when-checked textbox'>
+								All options are enabled by default. You may disable any you do not require for your use case. Hover over each option to see a description.
+							</div>
+							
+							<div class='show-when-checked grid'>
+								<input type="checkbox" id='PLT' data-structure='performance[]-PLT' />
+								<label class="switch" for='PLT' title='The time it takes to download and display the entire content of a web page in the browser window (measured in seconds).'> 
+									<span class="knob"></span> Page Load Time
+								</label>
+								
+								<input type="checkbox" id='SI' data-structure='performance[]-SI' />
+								<label class="switch" for='SI' title='The average time at which visible parts of the page are displayed (measured in seconds).'> 
+									<span class="knob"></span> Speed Index
+								</label>
+								
+								<input type="checkbox" id='TTFB' data-structure='performance[]-TTFB' />
+								<label class="switch" for='TTFB' title="The time from the user or client making an HTTP request to the first byte of the page being received by the client's browser (measured in seconds)."> 
+									<span class="knob"></span> Time To First Byte
+								</label>
+								
+								<input type="checkbox" id='FP' data-structure='performance[]-FP' />
+								<label class="switch" for='FP' title='Also know as "Start Render. The point when the browser renders anything that is visually different from what was on the screen prior to navigation (measured in seconds).'> 
+									<span class="knob"></span> First Paint
+								</label>
+								
+								<input type="checkbox" id='FCP' data-structure='performance[]-FCP' />
+								<label class="switch" for='FCP' title='The point when the browser renders the first bit of content from the DOM, which may be text, an image, SVG, or anything else (measured in seconds).'> 
+									<span class="knob"></span> First Contentful Paint
+								</label>
+								
+								<input type="checkbox" id='TTI' data-structure='performance[]-TTI' />
+								<label class="switch" for='TTI' title='The point at which layout has stabilized, key webfonts are visible, and the main thread is available enough to handle user input (measured in seconds).'> 
+									<span class="knob"></span> Time To Interactive
+								</label>
+								
+								<input type="checkbox" id='ITC' data-structure='performance[]-ITC' />
+								<label class="switch" for='ITC' title='Time difference between interactive page and full page load (measured in seconds).'> 
+									<span class="knob"></span> Interactive To Complete
+								</label>
+								
+								<input type="checkbox" id='RR' data-structure='performance[]-RR' />
+								<label class="switch" for='RR' title='Total number of requests made to the server for resources in order to fully present the page to the user (measured in number of requested resources).'> 
+									<span class="knob"></span> Resources Requests
+								</label>
+								
+								<input type="checkbox" id='RS' data-structure='performance[]-RS' />
+								<label class="switch" for='RS' title='Weight of the downlaoded resources needed for the page (measured in megabytes).'> 
+									<span class="knob"></span> Resources' Size
+								</label>
+								
+								<input type="checkbox" id='PDT' data-structure='performance[]-PDT' />
+								<label class="switch" for='PDT' title='Time to download page since it has been first requested (measured in seconds).'> 
+									<span class="knob"></span> Page Download Time
+								</label>
+								
+								<input type="checkbox" id='PRT' data-structure='performance[]-PRT' />
+								<label class="switch" for='PRT' title='Time to render the content on the page (measured in seconds).'> 
+									<span class="knob"></span> Page Render Time
+								</label>
+								
+								<input type="checkbox" id='RL' data-structure='performance[]-RL' />
+								<label class="switch" for='RL' title='How long it took for response to get to user (measured in seconds).'> 
+									<span class="knob"></span> Response Latency
+								</label>
+								
+								<input type="checkbox" id='RT' data-structure='performance[]-RT' />
+								<label class="switch" for='RT' title='Time it took to download the response from the server (measured in seconds).'> 
+									<span class="knob"></span> Response Transfer
+								</label>
+							</div>
+						</section>
+												
+						<section name='sections'>
+							<h3>Page Sections</h3>
+							<input type="checkbox" id='sections' data-structure='sections' class='shows-next' />
+							<label class="switch" for='sections'> 
+								<span class="knob"></span> I want to break page down into section (if you leave this option unchecked, default behaviour will be to parse the whole page as a single entity).
+							</label>
+							
+							<div class='show-when-checked textbox top-border section-data'>
+								<div class='toolbar'>
+									<a type='button' data-action='add_section'>Add new section</a>
+								</div>
+								
+								<div class='textinput'>
+									<input type="text" id='sections-id-0' data-structure='sections[0]-id' onkeyup="this.setAttribute('value', this.value);" value='' />
+									<label for='sections-id-0'>Enter unique section id: </label>
+									<span class='info-icon' title='//STRING, css type selector for container element '>&#9432;</span>
+								</div>
+								
+								<div class='textinput'>
+									<input type="text" id='sections-modifier-0' data-structure='sections[0]-modifier' onkeyup="this.setAttribute('value', this.value);" value='' />
+									<label for='sections-modifier-0'>[Optional] Enter modifier: </label>
+									<span class='info-icon' title='//STRING, css type selectors, used to select/deselect certain images within given container, does not work for bgImages for now, DO NOT USE * '>&#9432;</span>
+								</div>
+								
+								<div class='textinput'>
+									<input type="text" id='sections-name-0' data-structure='sections[0]-name' onkeyup="this.setAttribute('value', this.value);" value='' />
+									<label for='sections-name-0'>Enter section alias: </label>
+									<span class='info-icon' title='//STRING, user-friendly name, how section should be represented in parsed page object, MUST BE UNIQUE '>&#9432;</span>
+								</div>
+								
+								<div class='textinput'>
+									<input type="text" id='sections-datasets-0' data-structure='sections[0]-dataset' onkeyup="this.setAttribute('value', this.value);" value='' />
+									<label for='sections-datasets-0'>[Optional] Enter data attributes: </label>
+									<span class='info-icon' title='//STRING, allows to process also images that are in data attributes. Should be a list of data attributes separated by comme.&#013;E.g. data-large, data-medium, data-small '>&#9432;</span>
+								</div>
+								
+								<input type="checkbox" id='sections-skipSrc-0' data-structure='sections[0]-skipSrc' />
+								<label class="switch" for='sections-skipSrc-0'> 
+									<span class="knob"></span> Do not process images contained in src attribute
+								</label>
+								
+								<input type="checkbox" id='sections-bgImages-0' data-structure='sections[0]-bgImages' />
+								<label class="switch" for='sections-bgImages-0'> 
+									<span class="knob"></span> Process images set as background-image using css
+								</label>
+								
+								<input type="checkbox" id='sections-cacheImages-0' data-structure='sections[0]-cacheImages' />
+								<label class="switch" for='sections-cacheImages-0'> 
+									<span class="knob"></span> Cache images within image records (might be useful if using custom checks)
+								</label>
+								
+								<input type="checkbox" id='sections-errorChecking-0' data-structure='sections[0]-errorChecking' class='shows-next' />
+								<label class="switch" for='sections-errorChecking-0'> 
+									<span class="knob"></span> I want to set up error checking
+								</label>
+								
+								<div class='show-when-checked checks'>
+									<div>
+										<input type="checkbox" id='sections-width-0' data-structure='sections[0]-errorChecking{}-width' class='shows-next' />
+										<label class="switch" for='sections-width-0'> 
+											<span class="knob"></span> Do width check
+										</label>
+										
+											<div class='show-when-checked textinput'>
+												<input type="text" id='width-check-0' data-structure='sections[0]-errorChecking{}-width' onkeyup="this.setAttribute('value', this.value);" value='' />
+												<label for='width-check-0'>Set width: </label>
+												<span class='info-icon' title='Checks whether image width is exactly the given value, in px; use object-like notation when you have different requirements for different images coming from data attrbitues (defaul denotes images in scr attribute).&#013;E.g. default: 1000, data-large: 1500, data-medium: 900, data-small: 500 '>&#9432;</span>
+											</div>
+									</div>
+									
+									<div>
+										<input type="checkbox" id='sections-height-0' data-structure='sections[0]-errorChecking{}-height' class='shows-next' />
+										<label class="switch" for='sections-height-0'> 
+											<span class="knob"></span> Do height check
+										</label>
+										
+											<div class='show-when-checked textinput'>
+												<input type="text" id='height-check-0' data-structure='sections[0]-errorChecking{}-height' onkeyup="this.setAttribute('value', this.value);" value='' />
+												<label for='height-check-0'>Set height: </label>
+												<span class='info-icon' title='Checks whether image height is exactly the given value, in px; use object-like notation when you have different requirements for different images coming from data attrbitues (defaul denotes images in scr attribute).&#013;E.g. default: 1000, data-large: 1500, data-medium: 900, data-small: 500 '>&#9432;</span>
+											</div>
+									</div>
+									
+									<input type="checkbox" id='sections-spaces-0' data-structure='sections[0]-errorChecking{}-spaces' />
+									<label class="switch" for='sections-spaces-0'> 
+										<span class="knob"></span> Do spaces check
+									</label>
+									
+									<div>
+										<input type="checkbox" id='sections-filesize-0' data-structure='sections[0]-errorChecking{}-filesize' class='shows-next' />
+										<label class="switch" for='sections-filesize-0'> 
+											<span class="knob"></span> Do flesize check
+										</label>
+										
+											<div class='show-when-checked textinput'>
+												<input type="text" id='filesize-check-0' data-structure='sections[0]-errorChecking{}-filesize' onkeyup="this.setAttribute('value', this.value);" value='' />
+												<label for='filesize-check-0'>Set max filesize: </label>
+												<span class='info-icon' title='Checks whether image filesize is below the given value, in MB; use object-like notation when you have different requirements for different images coming from data attrbitues (defaul denotes images in scr attribute).&#013;E.g. default: 0.5, data-large: 0.7, data-medium: 0.4, data-small: 0.1 '>&#9432;</span>
+											</div>
+									</div>
+									
+									<div>
+										<input type="checkbox" id='sections-custom-0' data-structure='sections[0]-errorChecking{}-custom' class='shows-next' />
+										<label class="switch" for='sections-custom-0'> 
+											<span class="knob"></span> I want to set up custom check function
+										</label>
+										
+											<div class='show-when-checked'>
+												<textarea id='custom-check-body-0' data-structure='sections[0]-errorChecking{}-custom' onkeyup="this.setAttribute('value', this.value);" value='' placeholder='Set check functions'></textarea>
+												<span class='info-icon' title='For structure of the function itself, see the Documentation area.&#013;You can write multiple functions, both fat arrow and regular functions are supported. Enclose each function in <code name="FUNCTION_NAME"></code> tags, where FUNCTION_NAME is the name of a custom name of the check you will be running. This name will be used for reporting purposes, so please keep it simple and clear. '>&#9432;</span>
+											</div>
+									</div>
+								</div>
+							</div>
+						</section>
+					</div>
+				</div>
+			</div>
+		</main>
+	</div>
+	
+	<div id='output'>
+		<a type='button' data-action='close_modal' class='close-btn'>&times;</a>
+		<div class='results'></div>
+	</div>
+	
+<template id='section-template'>
+	<div class='show-when-checked textbox top-border section-data'>
+		<div class='toolbar'>
+			<a type='button' data-action='add_section'>Add new section</a> | <a type='button' data-action='remove_section'>Remove current</a>
+		</div>
+	
+		<div class='textinput'>
+			<input type="text" id='sections-id' data-structure='sections[${count}]-id' onkeyup="this.setAttribute('value', this.value);" value='' />
+			<label for='sections-id'>Enter unique section id: </label>
+			<span class='info-icon' title='//STRING, css type selector for container element '>&#9432;</span>
+		</div>
+		
+		<div class='textinput'>
+			<input type="text" id='sections-modifier' data-structure='sections[${count}]-modifier' onkeyup="this.setAttribute('value', this.value);" value='' />
+			<label for='sections-modifier'>[Optional] Enter modifier: </label>
+			<span class='info-icon' title='//STRING, css type selectors, used to select/deselect certain images within given container, does not work for bgImages for now, DO NOT USE * '>&#9432;</span>
+		</div>
+		
+		<div class='textinput'>
+			<input type="text" id='sections-name' data-structure='sections[${count}]-name' onkeyup="this.setAttribute('value', this.value);" value='' />
+			<label for='sections-name'>Enter section alias: </label>
+			<span class='info-icon' title='//STRING, user-friendly name, how section should be represented in parsed page object, MUST BE UNIQUE '>&#9432;</span>
+		</div>
+		
+		<div class='textinput'>
+			<input type="text" id='sections-datasets-0' data-structure='sections[${count}]-dataset' onkeyup="this.setAttribute('value', this.value);" value='' />
+			<label for='sections-datasets-0'>[Optional] Enter data attributes: </label>
+			<span class='info-icon' title='//STRING, allows to process also images that are in data attributes. Should be a list of data attributes separated by comme.&#013;E.g. data-large, data-medium, data-small '>&#9432;</span>
+		</div>
+		
+		<input type="checkbox" id='sections-skipSrc' data-structure='sections[${count}]-skipSrc' />
+		<label class="switch" for='sections-skipSrc'> 
+			<span class="knob"></span> Do not process images contained in src attribute
+		</label>
+		
+		<input type="checkbox" id='sections-bgImages' data-structure='sections[${count}]-bgImages' />
+		<label class="switch" for='sections-bgImages'> 
+			<span class="knob"></span> Process images set as background-image using css
+		</label>
+		
+		<input type="checkbox" id='sections-cacheImages' data-structure='sections[${count}]-cacheImages' />
+		<label class="switch" for='sections-cacheImages'> 
+			<span class="knob"></span> Cache images within image records (might be useful if using custom checks)
+		</label>
+		
+		<input type="checkbox" id='sections-errorChecking' data-structure='sections[${count}]-errorChecking' class='shows-next' />
+		<label class="switch" for='sections-errorChecking'> 
+			<span class="knob"></span> I want to set up error checking
+		</label>
+		
+		<div class='show-when-checked checks'>
+			<div>
+				<input type="checkbox" id='sections-width' data-structure='sections[${count}]-errorChecking{}-width' class='shows-next' />
+				<label class="switch" for='sections-width'> 
+					<span class="knob"></span> Do width check
+				</label>
+				
+					<div class='show-when-checked textinput'>
+						<input type="text" id='width-check' data-structure='sections[${count}]-errorChecking{}-width' onkeyup="this.setAttribute('value', this.value);" value='' />
+						<label for='width-check'>Set width: </label>
+						<span class='info-icon' title='Checks whether image width is exactly the given value, in px; use object-like notation when you have different requirements for different images coming from data attrbitues (defaul denotes images in scr attribute).&#013;E.g. default: 1000, data-large: 1500, data-medium: 900, data-small: 500 '>&#9432;</span>
+					</div>
+			</div>
+			
+			<div>
+				<input type="checkbox" id='sections-height' data-structure='sections[${count}]-errorChecking{}-height' class='shows-next' />
+				<label class="switch" for='sections-height'> 
+					<span class="knob"></span> Do height check
+				</label>
+				
+					<div class='show-when-checked textinput'>
+						<input type="text" id='height-check' data-structure='sections[${count}]-errorChecking{}-height' onkeyup="this.setAttribute('value', this.value);" value='' />
+						<label for='height-check'>Set height: </label>
+						<span class='info-icon' title='Checks whether image height is exactly the given value, in px; use object-like notation when you have different requirements for different images coming from data attrbitues (defaul denotes images in scr attribute).&#013;E.g. default: 1000, data-large: 1500, data-medium: 900, data-small: 500 '>&#9432;</span>
+					</div>
+			</div>
+			
+			<input type="checkbox" id='sections-spaces' data-structure='sections[${count}]-errorChecking{}-spaces' />
+			<label class="switch" for='sections-spaces'> 
+				<span class="knob"></span> Do spaces check
+			</label>
+			
+			<div>
+				<input type="checkbox" id='sections-filesize' data-structure='sections[${count}]-errorChecking{}-filesize' class='shows-next' />
+				<label class="switch" for='sections-filesize'> 
+					<span class="knob"></span> Do flesize check
+				</label>
+				
+					<div class='show-when-checked textinput'>
+						<input type="text" id='filesize-check' data-structure='sections[${count}]-errorChecking{}-filesize' onkeyup="this.setAttribute('value', this.value);" value='' />
+						<label for='filesize-check'>Set max filesize: </label>
+						<span class='info-icon' title='Checks whether image filesize is below the given value, in MB; use object-like notation when you have different requirements for different images coming from data attrbitues (defaul denotes images in scr attribute).&#013;E.g. default: 0.5, data-large: 0.7, data-medium: 0.4, data-small: 0.1 '>&#9432;</span>
+					</div>
+			</div>
+			
+			<div>
+				<input type="checkbox" id='sections-custom' data-structure='sections[${count}]-errorChecking{}-custom' class='shows-next' />
+				<label class="switch" for='sections-custom'> 
+					<span class="knob"></span> I want to set up custom check function
+				</label>
+				
+					<div class='show-when-checked'>
+						<textarea id='custom-check-body' data-structure='sections[${count}]-errorChecking{}-custom' onkeyup="this.setAttribute('value', this.value);" value='' placeholder='Set check functions'></textarea>
+						<span class='info-icon' title='For structure of the function itself, see the Documentation area.&#013;You can write multiple functions, both fat arrow and regular functions are supported. Enclose each function in <code name="FUNCTION_NAME"></code> tags, where FUNCTION_NAME is the name of a custom name of the check you will be running. This name will be used for reporting purposes, so please keep it simple and clear. '>&#9432;</span>
+					</div>
+			</div>
+		</div>
+	</div>
+</template>
+
+
+
+<script src='serialEASY.js'></script>
+<script>
+	//setup event handling for anchor tags
+	document.body.addEventListener('click', function(event) {
+		if (event.target.tagName !== 'A' || !event.target.dataset.action) return;
+		
+		var action = event.target.dataset.action;
+		
+		if (events[action]) events[action]( event );
+		else console.log('Unknown action: ', action);
+	});
+	
+	var events = {
+		add_section: function(event) {
+			//clone section template
+			var template = document.getElementById('section-template');
+			var clone = template.content.cloneNode(true);
+			
+			//check how many sections are there already
+			var count = document.getElementsByClassName('section-data').length;
+			
+			//mark the clone with data-clone attribute
+			clone.children[0].dataset.clone = count;
+			
+			//update input ids and input data-structure
+			[].slice.call( clone.querySelectorAll('input, textarea') ).forEach( input => {
+				input.id = input.id + '-' + count;
+				input.dataset.structure = input.dataset.structure.replace('${count}', count);
+			});
+			
+			//update labels for
+			[].slice.call( clone.querySelectorAll('label') ).forEach( label => {
+				var forAttr = label.getAttribute('for');
+				forAttr = forAttr + '-' + count;
+				label.setAttribute('for', forAttr);
+			});			
+			
+			//append
+			document.querySelector('section[name=sections]').appendChild(clone);
+		},
+		
+		close_modal: function(event) {
+			event.target.parentElement.style.display = 'none';
+		}, 
+		
+		remove_section: function(event) {
+			//get current section
+			var section = event.target.parentElement.parentElement;
+			
+			//check if section is last, and if not update the numbering in input ids and label for attributes
+			var data = [].slice.call( section.parentElement.querySelectorAll('.section-data') );
+			var sectionIndex = data.indexOf(section);
+			
+			if (sectionIndex < data.length - 1) {
+				for (var i = sectionIndex + 1; i < data.length; i++) {
+					//re-mark the section's data-clone attribute
+					data[i].dataset.clone = i-1;
+					
+					//update input ids and input data-structure
+					[].slice.call( data[i].querySelectorAll('input, textarea') ).forEach( input => {
+						//update id
+						var id = input.id.split('-');
+						id[ id.length - 1 ] = i-1;
+						input.id = id.join('-');
+						//update data-structure
+						var json = input.dataset.json;
+						json = json.replace(/\[(.*?)\]/g, '[' + (i-1) + ']');
+						input.dataset.json = json;
+					});
+					
+					//update labels for
+					[].slice.call( data[i].querySelectorAll('label') ).forEach( label => {
+						var forAttr = label.getAttribute('for').split('-');
+						forAttr[ forAttr.length - 1 ] = i-1;
+						label.setAttribute( 'for', forAttr.join('-') );
+					});				
+				}
+			}
+			
+			//remove
+			section.parentElement.removeChild(section);
+		},
+		
+		save_editor_json: function(event) {
+			//get input and textarea elements
+			var elements = document.getElementsByClassName('editor')[0].querySelectorAll('input, textarea');
+			
+			//reduce them to an object containine name and value of valid elements only (i.e. none-empty, none-falsy)
+			//var data = form2js(elements);
+			var data = serialeasy().serialize(elements);
+			
+			//output
+			console.log('Final data: ', data);
+			//visualize
+			output.style.display = 'block';
+			document.querySelector('#output .results').textContent = JSON.stringify(data, null, 4);
+			
+			//DO VALIDATION FOR REQUIRED FIELDS
+			
+			//PROCEED WITH SAVING THE SETTING
+		},
+	};
+
+</script>
+</body>
+</html>
