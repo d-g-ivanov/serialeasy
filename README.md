@@ -53,7 +53,7 @@ For example,
 sections[1]-errorChecking{}-width
 
 
-// { sections: [ undefined, { errorChecking: { width: <your value goes here> } } ] }
+// { sections: [ undefined, { errorChecking: { width: < value goes here > } } ] }
 ```
 
 The above is read in the following manner with '-' as a delimiter:
@@ -65,9 +65,9 @@ The above is read in the following manner with '-' as a delimiter:
 
 ### Further breakdown
 
-```html sections{} ``` - means create a key called 'sections' whose value is an object.
-```html sections[] ``` - means create a key called 'sections' whose value is an array. I will be pushing things into the array. If nothing follows the expression, it will push the value of the input into the array. If the expression is followed by a string, it will push the string onto the array. If it is followed by another expression, it will push an empty object into the array and process the enxt command.
-```html sections[index] ``` - means create a key called 'sections' whose value is an array. I want to work with <index> element of the array. If that index is empty, please place an empty object in it.
+```html sections{} ``` - means create a key called 'sections' whose value is an object.  
+```html sections[] ``` - means create a key called 'sections' whose value is an array. I will be pushing things into the array. If nothing follows the expression, it will push the value of the input into the array. If the expression is followed by a string, it will push the string onto the array. If it is followed by another expression, it will push an empty object into the array and process the enxt command.  
+```html sections[index] ``` - means create a key called 'sections' whose value is an array. I want to work with <index> element of the array. If that index is empty, please place an empty object in it.  
 
 
 ## API
@@ -79,7 +79,7 @@ Takes in a collection of HTML form elements and extract the information from the
 Takes in an object and merges that with the default settings. The method is chainable meaning that you can set the options and call the serialize method one after the other.
 
 ```html
-	var data = serialeasy().setOptions(options).serialize(elements);
+var data = serialeasy().setOptions(options).serialize(elements);
 ```
 
 Possible option keys:
@@ -87,22 +87,22 @@ Possible option keys:
 dataset - sets the name of the data attribute to be used for the template string. Defaults to 'structure'.
 
 ```html
-	var data = serialeasy().setOptions({ dataset: 'template'});
-	// serialize function will search for the template string within data-template attribute
+var data = serialeasy().setOptions({ dataset: 'template'});
+// serialize function will search for the template string within data-template attribute
 ```
 
 delimiter - defines the separator used within the template string. Defauls to a dash ('-').
 
 ```html
-	var data = serialeasy().setOptions({ delimiter: '.'});
-	// serialize function will expect that the tempalte string looks something like this: sections[0].errorChecking{}-width
+var data = serialeasy().setOptions({ delimiter: '.'});
+// serialize function will expect that the tempalte string looks something like this: sections[0].errorChecking{}-width
 ```
 
 mergeArrays - BOOLEAN, allows you to specify whether it should try and merge values within arrays when indeces are specified. Experimental. Defaults to 'true'.
 
 ```html
-	var data = serialeasy().setOptions({ delimiter: '.'});
-	// serialize function will expect that the tempalte string looks something like this: sections[0].errorChecking{}-width
+var data = serialeasy().setOptions({ delimiter: '.'});
+// serialize function will expect that the tempalte string looks something like this: sections[0].errorChecking{}-width
 ```
 
 
