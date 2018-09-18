@@ -49,7 +49,7 @@ Everything starts with an empty object that is being fillwed out based on provid
 
 For example,
 ```html
-	1			2			3
+     1		  2	      3
 sections[1]-errorChecking{}-width
 
 
