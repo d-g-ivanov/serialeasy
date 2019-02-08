@@ -12,6 +12,9 @@ var serialeasy = (function() {
 	
 	function form2js(elementCollection) {
 		return [].reduce.call(elementCollection, function(result, element) {
+
+			if(!element.dataset[options.dataset]) return result;
+
 			value = element.type === 'checkbox' ? element.checked : element.value;
 			
 			if ( !value ) return result; //this will ensure it returns null, if no values in the form
