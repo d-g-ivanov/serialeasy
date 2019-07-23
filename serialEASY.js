@@ -12,10 +12,16 @@ var serialeasy = (function() {
 	
 	function form2js(elementCollection) {
 		return [].reduce.call(elementCollection, function(result, element) {
-
-			if(!element.dataset[options.dataset]) return result;
-
-			value = element.type === 'checkbox' ? element.checked : element.value;
+			// extract the value
+			if (element.type !== 'radio' && element.type !== 'checkbox') {
+				value = element.value
+			} else {
+				if (element.type === "radio" && element.checked) {
+					value = element.value;
+				} else if (element.type === 'checkbox') {
+					value = element.checked;
+				}
+			}
 			
 			if ( !value ) return result; //this will ensure it returns null, if no values in the form
 			
@@ -40,8 +46,8 @@ var serialeasy = (function() {
 			
 			//console.log('Structure In Object Form: ', structure);
 			
-			//reset the position to null for next element
-			position = null;
+			//reset the position and value to null for next element
+			position = null; value = null;
 			
 			//merge structure with the final data obect, structure is now a possibly multi-level object
 			result = merge_deep(result, structure);
