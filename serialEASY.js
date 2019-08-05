@@ -1,219 +1,334 @@
 var serialeasy = (function() {
 	// 1. allow false/empty values as well, line 127
 	// 2. handle select element
+	// 3. extend functionality so that one can perform a function on each value to convert/process it.
+	// 4. Add array support for unserialeasy
 	// NOTE: do not store objects in arrays without index, or they will merge, maybe add mergeArrays option?!
 	var options = {
 		dataset: 'structure',
 		delimiter: '-',
 		mergeArrays: true,
+		shouldIndex: 'default'
 	};
-	
-	var value, position;
-	
-	function form2js(elementCollection) {
-		return [].reduce.call(elementCollection, function(result, element) {
-			// extract the value
-			if (element.type !== 'radio' && element.type !== 'checkbox') {
-				value = element.value
-			} else {
-				if (element.type === "radio" && element.checked) {
-					value = element.value;
-				} else if (element.type === 'checkbox') {
-					value = element.checked;
-				}
-			}
-			
-			if ( !value ) return result; //this will ensure it returns null, if no values in the form
-			
-			result = result || {}; //this will ensure that if there is a value, the final result will be an object
-			
-			var structure;
-				
-			try {
-				structure = element.dataset[options.dataset].split(options.delimiter);
-			} catch (err) {
-				console.log(`The dataset attribute you provided does not exist, or the delimiter is wrong.\n\nDataset should be "data-${options.dataset}"\n\nDelimiter should be "${options.delimiter}"\n\n`, err);
-				return result;
-			}
-			
-			//translate the structure into an array of objects {key, modifier, type, value, index, typeOfValues}
-			structure = structure.map( translateToArray );
-			
-			//console.log('Structure In Array Form: ', structure);
-			
-			//merge the structure levels into a single object
-			structure = structure.reduce( translateToObject, {} );
-			
-			//console.log('Structure In Object Form: ', structure);
-			
-			//reset the position and value to null for next element
-			position = null; value = null;
-			
-			//merge structure with the final data obect, structure is now a possibly multi-level object
-			result = merge_deep(result, structure);
-			
-			//return the final result
-			return result;
-		}, null );
-	}
-	
-	function translateToArray(level) {
-		var obj = {}, modifier;
-		//assign the key, it is the part before the brackets
-		obj.key = level.replace(/\[+(.*?)\]+|\{.*?\}/g, "");
-		
-		//check the type, the brackets and content within them
-		modifier = level.match(/\[+(.*?)\]+|\{.*?\}/i);
-		
-		//if there is a type, determine what it is
-		if ( modifier ) {
-			modifier = modifier[0];
-			obj.modifier = modifier;
-			
-			//assign the value based on type
-			if ( modifier.startsWith('{') ) {
-				obj.type = 'object';
-				obj.value = {};
-			}
-			else if ( modifier.startsWith('[') ) {
-				obj.type = 'array';
-				obj.value = [];
-				
-				//check whether there is an index (index means array of objects)
-				if ( obj.modifier.length > 2 ) {
-					//check for index
-					var num = modifier.match(/\d+/);
-					if (num) {
-						obj.index = parseInt(num[0]);
-					}
-					else obj.index = null;
-					
-					//check for the type of elements within the array
-					var typeOfValues = obj.modifier.substr(1, obj.modifier.length - 2).match(/\[.*?\]|\{.*?\}/i);
-					if (typeOfValues) {
-						obj.typeOfValues = typeOfValues[0].startsWith('[') ? [] : {};
-						
-						obj.index ? obj.value[obj.index] = obj.typeOfValues : obj.value.push(obj.typeOfValues);
-					}
-					else obj.typeOfValues = null;
-				} else {
-					obj.index = null;
-					obj.typeOfValues = null;
-				}
-			}
-			else obj.value = value;
-		}
-		
-		//if no value, is assigned based on type, this means it is a final level, so value should be the value of the input... so assign it as such
-		if (!obj.value) obj.value = value;
-		
-		//return the broken-down structure
-		return obj;		
-	}
 
-		
-	function translateToObject(res, level) {
-		//if it is the first iteration (position is not set)
-		if (!position) {
-			//it all starts with an object, so treat it as such and assign the key and value of the level
-			res[level.key] = level.value;
-			//if value is an array
-			if ( level.type === 'array' ) {
-				if ( level.index !== null && level.typeOfValues ) position = res[level.key][level.index];
-				else if ( level.index !== null && !level.typeOfValues ) {
-					res[level.key][level.index] = {};
-					position = res[level.key][level.index];
-				}
-				else if ( !level.index !== null && level.typeOfValues ) position = res[level.key][0];
-				else position = res[level.key];
-			}
-			//if not an array
-			else {							
-				position = res[level.key];
-			}
-		} 
-		//if it is a subsequest interation (position is set)
-		else {
-			if (position instanceof Array) {
-				//this would mean that the array is not of objects, so push the key or value accordingly
-				if (level.key && typeof level.value === 'boolean') position.push(level.key);
-				else position.push(level.value);
-			} else if (position instanceof Object) {
-				//assign key and value of the level
-				position[level.key] = level.value;
-				//if value is an array
-				if ( level.type === 'array' ) {
-					if ( level.index !== null && level.typeOfValues ) position = position[level.key][level.index];
-					else if ( level.index !== null && !level.typeOfValues ) {
-						position[level.key][level.index] = {};
-						position = position[level.key][level.index];
-					}
-					else if ( !level.index !== null && level.typeOfValues ) position = position[level.key][0];
-					else position = position[level.key];
-				}
-				//if not an array
-				else {							
-					position = position[level.key];
-				}
-			}
-		}
-		//return the possibly multi-level object
-		return res;
-	}
-		
-	function merge_deep(...objects) {
-		const isObject = obj => obj && obj instanceof Object && !Array.isArray(obj);
-		const isValidIndex = entry => entry && entry instanceof Object;
-
-		return objects.reduce((prev, obj) => {
-			Object.keys(obj).forEach(key => {
-				//get the value of each key for both the end result and the current object
-				const pVal = prev[key];
-				const oVal = obj[key];
-				//if key is an array
-				if (Array.isArray(pVal) && Array.isArray(oVal)) {
-					if (options.mergeArrays) {
-						var oIndex = oVal.findIndex(isValidIndex);
-						if ( oIndex >= 0 ) {
-							if (  Array.isArray( pVal[oIndex] ) && Array.isArray( oVal[oIndex] ) ) {
-								prev[key][oIndex] = pVal[oIndex].concat(...oVal);
-							} else if ( isObject( pVal[oIndex] ) && isObject( oVal[oIndex] ) ) {
-								prev[key][oIndex] = merge_deep(pVal[oIndex], oVal[oIndex]);
-							} else {
-								prev[key][oIndex] = oVal[oIndex];
-							}
-						} else {
-							prev[key] = pVal.concat(...oVal);
-						}
-					}
-					else {
-						prev[key] = pVal.concat(...oVal);
-					}
-				}
-				//if key is an object
-				else if (isObject(pVal) && isObject(oVal)) {
-					prev[key] = merge_deep(pVal, oVal);
-				}
-				//else assign the new value to the end result
-				else {
-					prev[key] = oVal;
-				}
-			});
-
-			return prev;
-		}, {} );
-	}
-
+	/* helpers */
 	function setOptions(opts) {
 		Object.assign(options, opts);
-		console.log(options);
+		// console.log(options);
 		return this;
+	}
+
+	function isObject(entity) { return entity && entity instanceof Object && !Array.isArray(entity); }
+	
+	function isArray(entity) { return entity && Array.isArray(entity); }
+
+	function isValidIndex(entry) { return entry && entry !== null && entry !== undefined; }
+
+	function isElement(entity){
+		return (
+		  typeof HTMLElement === "object" ? entity instanceof HTMLElement : //DOM2
+		  entity && typeof entity === "object" && entity !== null && entity.nodeType === 1 && typeof entity.nodeName==="string"
+	  );
+	}
+	
+
+	/* UNSERIALEASY */
+	function js2strings(data) {
+		//validate data
+		if ( typeof data === 'string' ) {
+			try {
+				data = JSON.parse(data);
+			} catch (err) {
+				throw new Error('Provided data is not a proper JSON string. Data:\n\n' + data);
+			}
+		} else if ( isObject(data) ) {
+			data = data;
+		} else {
+			throw new Error('Cannot use the provided data.\n\n' + data);
+		}
+		
+		//split into array and return to caller
+		// return splitObjectToString(data);
+		return isArray(data) ? splitArrayToString(data) : splitObjectToString(data);
+	}
+
+	function splitArrayToString(data, prevValue) {
+		//data is array
+		//prevValue is a string
+		return data.reduce( (final, datum, index) => {
+			let isobject = isObject(datum),
+				isarray = isArray(datum)
+				result = prevValue || '';
+
+			if (isobject) {
+				options.shouldIndex === 'never' ? result += '[]' : result += '[' + index + ']';
+				// return [...final, ...splitObjectToString(datum, result)];
+				return final.concat( splitObjectToString(datum, result) );
+			} else if (isarray) {
+				options.shouldIndex === 'never' ? result += '[]' : result += '[' + index + ']';
+				result += options.delimiter;
+				// return [...final, ...splitArrayToString(value, result)];
+				return final.concat( splitArrayToString(datum, result) );
+			} else {
+				options.shouldIndex === 'always' ? result += '[' + index + ']' : result += '[]';
+				final.push([result, datum]);
+				return final;
+			}
+		}, []);
+	}
+
+	function splitObjectToString(data, prevValue) {
+		return Object.entries(data).reduce( (final, [key, value]) => {
+			let isobject = isObject(value),
+				isarray = isArray(value)
+				result = prevValue || '';
+			
+			//update result to contain the new level
+			result = result ? (result + options.delimiter + key) : key;
+
+			if (isobject) {
+				result += '{}';
+				// return [...final, ...splitObjectToString(value, result)];
+				return final.concat( splitObjectToString(value, result) );
+			} else if (isarray) {
+				// return [...final, ...splitArrayToString(value, result)];
+				return final.concat( splitArrayToString(value, result) );
+			} else {
+				final.push([result, value]);
+				return final;
+			}
+			return final;
+		}, []);
+	}
+	
+	/* SERIALEASY */
+	var keyRegEx = /\[+(.*?)\]+|\{.*?\}/g;
+	var modifierRegEx = /\[+(.*?)\]+|\{.*?\}/i; // use match, 0 is brackets, 1 is number or '', if any
+
+	function form2js(data) {
+		// data should be an array or node list
+		// validate and rework the data
+		// - end format is array of objects with signature {structure: [], value: any}
+		data = [].reduce.call( data, (final, datum) => {
+			let extracted = {
+				structure: null,
+				value: null
+			}
+			// if element is an array
+			if ( isArray(datum) ) {
+				if (datum.length !== 2 || typeof datum[0] !== 'string') {
+					console.log('Inappropriate format. The following will not be processed: ' + datum);
+					return final;
+				}
+
+				extracted.structure = datum[0].split(options.delimiter);
+				extracted.value = datum[1];
+			}
+			// else if it is an html element
+			else if ( isElement(datum) ) {
+				// extract the value
+				if (datum.type !== 'radio' && datum.type !== 'checkbox') {
+					extracted.value = datum.value;
+				} else {
+					if (datum.type === "radio" && datum.checked) {
+						extracted.value = datum.value;
+					} else if (datum.type === 'checkbox') {
+						extracted.value = datum.checked;
+					}
+				}
+
+				// extract the structure
+				datum.dataset[options.dateset] && 
+					( extracted.structure = datum.dataset[options.dataset].split(options.delimiter) );
+			}
+
+			// if either is empty, return nothing
+			if (extracted.structure === null || extracted.value === null) {
+				console.log('Unrecognized format. The following will not be processed: ' + datum);
+				return final;
+			}
+
+			final.push(extracted);
+			return final;
+		}, []);
+
+		if (data.length === 0) {
+			console.log('None of the data is suitable for serializing. Please try with a different set.');
+			return null;
+		}
+		
+		return construct(data);
+	}
+	
+	function construct(data) {
+		// data is an array or objects with signature {structure: [], value: any}
+		// returns an object
+		return data.reduce( (final, datum) => {
+			// translate the requirements
+			datum.translated = translate(datum.structure);
+			// then reduces with translateToObject
+			datum.combined = combine(datum);
+			// then merges with deepMerge
+			final = merge(final, datum.combined);
+			return final;
+		}, {});
+	}
+
+	function translate(structure) {
+		return structure.map( (level, levelIndex) => {
+			let key = null, keyValueType = null, modifier = null, index = null;
+
+			// get key
+			key = level.replace(keyRegEx, '');
+			// get modifier
+			modifier = level.match(modifierRegEx);
+			modifier ? (modifier = modifier[0]) : '';
+			// get index
+			index = level.match(modifierRegEx);
+			index && !isNaN(index[1]) && index[1] !== '' ? (index = +index[1]) : (index = null);
+
+			// determine the keyValue based on the modifier
+			if (modifier) {
+				if ( modifier.startsWith('{') ) {
+					keyValueType = 'object';
+				}
+				else if ( modifier.startsWith('[') ) {
+					keyValueType = 'array';
+				}
+			}
+
+			return {
+				key: key,
+				keyValueType: keyValueType,
+				modifier: modifier,
+				index: index
+			}
+		});
+	}
+
+	function combine(data) {
+		let position = null,
+			positionIsArray = false,
+			positionStartIndex = null,
+			dataLength = data.translated.length - 1;
+
+		return data.translated.reduce( (final, level, levelIndex) => {
+			// first iteration, or postion is an object
+			if (!position) {
+				// assign the key and value to the object, as well as the new position
+				// position = final[level.key || level.index || 0] = level.keyValueType === 'array' ? [] : 
+				// 								level.keyValueType === 'object' ? {} : data.value;
+				if (level.key) {
+					position = final[level.key] = level.keyValueType === 'array' ? [] : 
+												level.keyValueType === 'object' ? {} : data.value;
+				} else {
+					position = final = [];
+				}
+			}
+			// if not first iteration, and position is an object
+			else if (positionIsArray === false) {
+				// assign the key and value to the object, as well as the new position
+				position = position[level.key] = level.keyValueType === 'array' ? [] : 
+												level.keyValueType === 'object' ? {} : data.value;				
+			}
+			// otherwise, the position is an array
+			else {
+				// if the current level is an array
+				if (!level.key && level.keyValueType === 'array') {
+					position[positionStartIndex || 0] = [];
+				}
+				// otherwise, the level is an object, or final value
+				else {
+					// if there is a key, the level is an object
+					if (level.key !== null) {
+						// set as object
+						position[positionStartIndex || 0] = {};
+						// assign the key and value to the object
+						if (level.keyValueType === 'array')
+							position[positionStartIndex || 0][level.key] = [];
+						else if (level.keyValueType === 'object')
+							position[positionStartIndex || 0][level.key] = {};
+						else
+							position[positionStartIndex || 0][level.key ] = data.value;
+					}
+					// else final value
+					else {
+						position[positionStartIndex || 0] = data.value;
+					}
+				}
+
+				// assign the new position
+				position = level.key ? position[positionStartIndex || 0][level.key] : position[positionStartIndex || 0];
+			}
+
+			// if last level and it is an array, set the value within the array at the correct index
+			if(levelIndex === dataLength && level.keyValueType === 'array') {
+				level.index !== null ? 
+					(position[level.index] = data.value ) :
+					position.push(data.value);
+			}
+
+			// recalculate position attributes
+			positionIsArray = (level.keyValueType === 'array');
+			positionStartIndex = level.index;
+
+			return final;
+		}, {});
+	}
+
+	// inspired by https://davidwalsh.name/javascript-deep-merge
+	function merge(target, source) {
+		let isSourceArray = isArray(source),
+			isTargetArray = isArray(target);
+		
+		// if array
+		if (isSourceArray) {
+			if (isTargetArray) {
+				if (options.mergeArrays) {
+					source.forEach(function(e, i) {
+						if (typeof target[i] === 'undefined') {
+							target[i] = JSON.parse( JSON.stringify( e ) );
+						} else if ( isObject( e ) || isArray( e ) ) {
+							target[i] = merge(target[i], e)
+						} else {
+							target.push( JSON.parse( JSON.stringify( e ) ) );
+						}
+					});
+				} else {
+					target = target.concat(source);
+				}
+			} else {
+				target = JSON.parse( JSON.stringify(source) );
+			}
+		} 
+		// else treat as object
+		else {
+			Object.keys(source).forEach(function (key) {
+				if (!(isArray(source[key]) || isObject(source[key]) ) || !target[key]) {
+					target[key] = JSON.parse( JSON.stringify(source[key]) );
+				} else {
+					target[key] = merge(target[key], source[key])
+				}
+			})
+		}
+
+		return target;
+	}
+
+	merge.all = function mergeAll(array) {
+		if (!Array.isArray(array) || array.length < 2) {
+			throw new Error('first argument should be an array with at least two elements');
+		}
+	
+		// we are sure there are at least 2 values, so it is safe to have no initial value
+		return array.reduce(function(prev, next) {
+			return merge(prev, next);
+		});
 	}
 	
 	return {
 		serialize: form2js,
+		unserialize: js2strings,
 		setOptions: setOptions,
 	};
 });
-
-
