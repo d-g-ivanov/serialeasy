@@ -111,6 +111,7 @@ var serialeasy = (function() {
 				value: null,
 				original: null
 			}
+
 			// if element is an array
 			if ( isArray(datum) ) {
 				if (datum.length !== 2 || typeof datum[0] !== 'string') {
@@ -128,10 +129,10 @@ var serialeasy = (function() {
 				if ( datum.tagName === 'SELECT' && datum.hasAttribute('multiple') ) {
 					var vals = [];
 
-					var options = select && select.options;
-					for (var i=0, iLen=options.length; i<iLen; i++) {		
-						if (options[i].selected) {
-							vals.push(options[i].value || options[i].text);
+					var optionTags = select && select.options;
+					for (var i=0, iLen=optionTags.length; i<iLen; i++) {		
+						if (optionTags[i].selected) {
+							vals.push(optionTags[i].value || optionTags[i].text);
 						}
 					}
 
@@ -151,8 +152,9 @@ var serialeasy = (function() {
 				}
 
 				// extract the structure
-				datum.dataset[options.dateset] && 
-					( extracted.original = datum.dataset[options.dateset] ) &&
+				console.log(datum.dataset, options)
+				datum.dataset[options.dataset] && 
+					( extracted.original = datum.dataset[options.dataset] ) &&
 					( extracted.structure = datum.dataset[options.dataset].split(options.delimiter) );
 			}
 
