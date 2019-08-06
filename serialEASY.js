@@ -1,15 +1,15 @@
 var serialeasy = (function() {
-	// 1. allow false/empty values as well, line 127
-	// 2. handle select element
-	// 3. extend functionality so that one can perform a function on each value to convert/process it.
-	// 4. Add array support for unserialeasy
-	// NOTE: do not store objects in arrays without index, or they will merge, maybe add mergeArrays option?!
+	// 1. allow false/empty values as well
 	var options = {
 		dataset: 'structure',
 		delimiter: '-',
 		mergeArrays: true,
-		shouldIndex: 'default'
+		shouldIndex: 'default',
+		preprocess: null
 	};
+	
+	var keyRegEx = /\[+(.*?)\]+|\{.*?\}/g;
+	var modifierRegEx = /\[+(.*?)\]+|\{.*?\}/i; // use match, 0 is brackets, 1 is number or '', if any
 
 	/* helpers */
 	function setOptions(opts) {
@@ -48,7 +48,6 @@ var serialeasy = (function() {
 		}
 		
 		//split into array and return to caller
-		// return splitObjectToString(data);
 		return isArray(data) ? splitArrayToString(data) : splitObjectToString(data);
 	}
 
@@ -102,17 +101,15 @@ var serialeasy = (function() {
 	}
 	
 	/* SERIALEASY */
-	var keyRegEx = /\[+(.*?)\]+|\{.*?\}/g;
-	var modifierRegEx = /\[+(.*?)\]+|\{.*?\}/i; // use match, 0 is brackets, 1 is number or '', if any
-
 	function form2js(data) {
 		// data should be an array or node list
 		// validate and rework the data
-		// - end format is array of objects with signature {structure: [], value: any}
+		// - end format is array of objects with signature {structure: [], value: any, original: string}
 		data = [].reduce.call( data, (final, datum) => {
 			let extracted = {
 				structure: null,
-				value: null
+				value: null,
+				original: null
 			}
 			// if element is an array
 			if ( isArray(datum) ) {
@@ -121,24 +118,41 @@ var serialeasy = (function() {
 					return final;
 				}
 
+				extracted.otiginal = datum[0];
 				extracted.structure = datum[0].split(options.delimiter);
 				extracted.value = datum[1];
 			}
 			// else if it is an html element
 			else if ( isElement(datum) ) {
-				// extract the value
-				if (datum.type !== 'radio' && datum.type !== 'checkbox') {
-					extracted.value = datum.value;
-				} else {
+				// if select and select is multiple
+				if ( datum.tagName === 'SELECT' && datum.hasAttribute('multiple') ) {
+					var vals = [];
+
+					var options = select && select.options;
+					for (var i=0, iLen=options.length; i<iLen; i++) {		
+						if (options[i].selected) {
+							vals.push(options[i].value || options[i].text);
+						}
+					}
+
+					vals.length && (extracted.vals = JSON.parse( JSON.stringify(vals) ) );
+				}
+				// if radio or checkbox
+				else if (datum.type === 'radio' || datum.type === 'checkbox') {
 					if (datum.type === "radio" && datum.checked) {
 						extracted.value = datum.value;
 					} else if (datum.type === 'checkbox') {
 						extracted.value = datum.checked;
 					}
+				} 
+				// otherwise, any other input tag
+				else {
+					extracted.value = datum.value;
 				}
 
 				// extract the structure
 				datum.dataset[options.dateset] && 
+					( extracted.original = datum.dataset[options.dateset] ) &&
 					( extracted.structure = datum.dataset[options.dataset].split(options.delimiter) );
 			}
 
@@ -156,7 +170,12 @@ var serialeasy = (function() {
 			console.log('None of the data is suitable for serializing. Please try with a different set.');
 			return null;
 		}
-		
+
+		// rework the values
+		// - the function should edit the data in place
+		typeof options.preprocess === 'function' && options.preprocess(data);
+
+		// construct and return
 		return construct(data);
 	}
 	
