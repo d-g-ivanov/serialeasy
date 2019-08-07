@@ -101,9 +101,9 @@ Takes in an object and merges that with the default settings. The method is chai
 var data = serialeasy().setOptions(options).serialize(elements);
 ```
 
-Possible option keys:
+### Possible option keys:
 
-dataset - sets the name of the data attribute to be used for the template string. Defaults to 'structure'.
+**dataset** - sets the name of the data attribute to be used for the template string. Defaults to 'structure'.
 	- needed only for serialize function when HTML elements are passed to it.
 
 ```html
@@ -111,7 +111,7 @@ var data = serialeasy().setOptions({ dataset: 'template'});
 // serialize function will search for the template string within data-template attribute
 ```
 
-delimiter - defines the separator used within the template string. Defauls to a dash ('-').
+**delimiter** - defines the separator used within the template string. Defauls to a dash ('-').
 	  - needed for both serialize and unserialize functions.
 
 ```html
@@ -119,7 +119,7 @@ var data = serialeasy().setOptions({ delimiter: '.'});
 // serialize function will expect that the tempalte string looks something like this: sections[0].errorChecking{}-width
 ```
 
-mergeArrays - BOOLEAN, allows you to specify whether it should try and merge values within arrays when indeces are specified. Experimental. Defaults to 'true'.
+**mergeArrays** - BOOLEAN, allows you to specify whether it should try and merge values within arrays when indeces are specified. Experimental. Defaults to 'true'.
 	    - needed only for the serialize function. 
 
 ```html
@@ -127,14 +127,14 @@ var data = serialeasy().setOptions({ delimiter: '.'});
 // serialize function will expect that the tempalte string looks something like this: sections[0].errorChecking{}-width
 ```
 
-shouldIndex - instructs whether the resulting structure string should include index number. If no index is provided, the serialize function might not merge objects in arrays properly.
+**shouldIndex** - instructs whether the resulting structure string should include index number. If no index is provided, the serialize function might not merge objects in arrays properly.
 	    - needed only for the unserialize function.
 	    - possible values for this are:
 	    	- never - never add indeces, no matter what
 		- always - always add indeces, no matter what
 		- default - i.e. any other value or missing - tries to be smart about the indeces and adds them only when the value within the array might require merging.
 
-preprocess - this should be a function that will be run after the structure and values have been collected form the HTML form elements, or unserialize data. Its purpose is to give you the chance to alter either the structure, or the values before the final object is constructed. For example, you can transform values to numbers, or cleanup unnecessary levels.
+**preprocess** - this should be a function that will be run after the structure and values have been collected form the HTML form elements, or unserialize data. Its purpose is to give you the chance to alter either the structure, or the values before the final object is constructed. For example, you can transform values to numbers, or cleanup unnecessary levels.
 	   - needed only for the serialize function.
 	   - takes is a data element (to be described soon) and should return the transformed data parameter with the internal structure as the one passed.
 
@@ -148,7 +148,7 @@ The data parameter passed to the function has the following internal structure:
 }
 ```
 
-collectAllValues - boolean option that suggests whether falsy values from the HTML elements should be included i nthe final object. Default is false (do not collect false values)
+**collectAllValues** - boolean option that suggests whether falsy values from the HTML elements should be included i nthe final object. Default is false (do not collect false values)
 	   	 - needed only for the serialize function.
 
 ## License
