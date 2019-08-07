@@ -1,11 +1,12 @@
 var serialeasy = (function() {
-	// 1. allow false/empty values as well
+
 	var options = {
 		dataset: 'structure',
 		delimiter: '-',
 		mergeArrays: true,
 		shouldIndex: 'default',
-		preprocess: null
+		preprocess: null,
+		collectAllValues: false
 	};
 	
 	var keyRegEx = /\[+(.*?)\]+|\{.*?\}/g;
@@ -127,11 +128,15 @@ var serialeasy = (function() {
 			else if ( isElement(datum) ) {
 				// if select and select is multiple
 				if ( datum.tagName === 'SELECT' && datum.hasAttribute('multiple') ) {
-					var vals = [];
-
-					var optionTags = select && select.options;
-					for (var i=0, iLen=optionTags.length; i<iLen; i++) {		
-						if (optionTags[i].selected) {
+					var vals = [],
+						optionTags = select && select.options;
+					for (var i=0, iLen=optionTags.length; i<iLen; i++) {
+						if (options.collectAllValues === true) {
+							var res = {};
+							res[optionTags[i].value || optionTags[i].text] = optionTags[i].selected;
+							vals.push(res);
+						}	
+						else if (optionTags[i].selected) {
 							vals.push(optionTags[i].value || optionTags[i].text);
 						}
 					}
@@ -140,7 +145,12 @@ var serialeasy = (function() {
 				}
 				// if radio or checkbox
 				else if (datum.type === 'radio' || datum.type === 'checkbox') {
-					if (datum.type === "radio" && datum.checked) {
+					if (options.collectAllValues === true) {
+						var res = {};
+						res[datum.value] = datum.checked;
+						extracted.value = res;
+					}
+					else if (datum.type === "radio" && datum.checked) {
 						extracted.value = datum.value;
 					} else if (datum.type === 'checkbox') {
 						extracted.value = datum.checked;
@@ -148,19 +158,26 @@ var serialeasy = (function() {
 				} 
 				// otherwise, any other input tag
 				else {
-					extracted.value = datum.value;
+					if (options.collectAllValues === true) {
+						extracted.value = datum.value;
+					} else {
+						datum.value !== "" && (extracted.value = datum.value);
+					}
 				}
 
 				// extract the structure
-				console.log(datum.dataset, options)
 				datum.dataset[options.dataset] && 
 					( extracted.original = datum.dataset[options.dataset] ) &&
 					( extracted.structure = datum.dataset[options.dataset].split(options.delimiter) );
 			}
 
-			// if either is empty, return nothing
-			if (extracted.structure === null || extracted.value === null) {
-				console.log('Unrecognized format. The following will not be processed: ' + datum);
+			// structure should not be empty/null
+			if (extracted.structure === null) {
+				console.log('Could not identify the structure for this input. There seems to be no data attribute called "' + options.structure + '". The following will not be processed any further: ', datum);
+				return final;
+			}
+			// these should be no emty/null values unless collectAllValues is true
+			else if (options.collectAllValues !== true && extracted.value === null) {
 				return final;
 			}
 
